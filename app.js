@@ -1,5 +1,29 @@
-// MovieGram - Application Scripts
+// Line 1: MovieGram - Application Scripts
+const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlMzdhMWExNmYwNTYyMWFkZmFlZjE5ZmU3YzI3MGQ4NSIsIm5iZiI6MTc4MDU5MzM3My45MjEsInN1YiI6IjZhMjFiMmRkMjVkODJhZDg0YzZlZWVhMCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.wQh4fzUGog7qb_VUVbzRPu7Rz8nvemQas_2b0zyzneM";
 
+async function fetchTrendingMovies() {
+    const url = 'https://api.themoviedb.org/3/trending/movie/day';
+    const options = {
+        method: 'GET',
+        headers: {
+            accept: 'application/json',
+            Authorization: `Bearer ${TMDB_TOKEN}`
+        }
+    };
+
+    try {
+        const response = await fetch(url, options);
+        const data = await response.json();
+        return data.results; // <--- Changed from console.log to return
+    } catch (err) {
+        console.error("Error fetching data:", err);
+        return [];
+    }
+}
+// Line 23 is now blank/clean! We removed the loose function call.
+
+// Call the function to test it
+fetchTrendingMovies();
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Initialize Clock
     initClock();
@@ -267,17 +291,28 @@ function initTrendingMovies() {
     if (!grid) return;
 
     // Call simulated Trakt API
+   // Call the real TMDB API
     fetchTrendingMovies().then(movies => {
         grid.innerHTML = '';
         if (countBadge) {
             countBadge.textContent = `${movies.length} Films`;
         }
 
-        renderMoviesIntoGrid(movies, grid);
+        // Map TMDB fields to what your createMovieCard function expects
+        const formattedMovies = movies.map(m => ({
+            id: m.id,
+            title: m.title || m.name,
+            year: m.release_date ? m.release_date.substring(0, 4) : 'N/A',
+            genres: ['Movie'], 
+            rating: m.vote_average,
+            synopsis: m.overview,
+            director: 'Unknown'
+        }));
+
+        renderMoviesIntoGrid(formattedMovies, grid);
     }).catch(err => {
         grid.innerHTML = `<div class="grid-loading">Failed to load feed. Error: ${err}</div>`;
     });
-}
 
 /**
  * Initialises search functionalities in the Explore tab.
